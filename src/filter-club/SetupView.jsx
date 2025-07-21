@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Coffee, Plus } from 'lucide-react';
 
 const SetupView = ({ createNewSession }) => {
-  const [coffees, setCoffees] = useState([{ name: '', roaster: '', country: '' }]);
+  const [coffees, setCoffees] = useState([{ name: '', roaster: '', country: '', varietals: '', processingMethod: '' }]);
   const [members, setMembers] = useState(['']);
   const [sessionName, setSessionName] = useState('');
 
-  const addCoffee = () => setCoffees(prev => [...prev, { name: '', roaster: '', country: '' }]);
+  const addCoffee = () => setCoffees(prev => [...prev, { name: '', roaster: '', country: '', varietals: '', processingMethod: '' }]);
   const addMember = () => setMembers(prev => [...prev, '']);
 
   const updateCoffee = (index, field, value) => {
@@ -58,13 +58,13 @@ const SetupView = ({ createNewSession }) => {
             Coffees
           </label>
           {coffees.map((coffee, index) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3 p-3 border border-gray-200 rounded-lg">
+            <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3 p-3 border border-gray-200 rounded-lg">
               <input
                 type="text"
                 value={coffee.name}
                 onChange={(e) => updateCoffee(index, 'name', e.target.value)}
                 className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                placeholder="Coffee Name"
+                placeholder="Name"
               />
               <input
                 type="text"
@@ -79,6 +79,20 @@ const SetupView = ({ createNewSession }) => {
                 onChange={(e) => updateCoffee(index, 'country', e.target.value)}
                 className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
                 placeholder="Country"
+              />
+              <input
+                type="text"
+                value={coffee.varietals}
+                onChange={(e) => updateCoffee(index, 'varietals', e.target.value)}
+                className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                placeholder="Varietals"
+              />
+              <input
+                type="text"
+                value={coffee.processingMethod}
+                onChange={(e) => updateCoffee(index, 'processingMethod', e.target.value)}
+                className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                placeholder="Process"
               />
             </div>
           ))}

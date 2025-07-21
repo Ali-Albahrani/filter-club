@@ -62,7 +62,9 @@ const FilterClubApp = () => {
         score: 0,
         name: coffee.name,
         roaster: coffee.roaster,
-        country: coffee.country
+        country: coffee.country,
+        varietals: coffee.varietals,
+        processingMethod: coffee.processingMethod
       };
     });
     votes.forEach(vote => {

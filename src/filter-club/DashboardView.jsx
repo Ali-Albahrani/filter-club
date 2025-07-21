@@ -45,6 +45,73 @@ const DashboardView = ({ sessions, setSessions, setCurrentView }) => {
     }))
     .sort((a, b) => b.avgScore - a.avgScore)
     .slice(0, 10);
+  // Leaderboard for varietals
+  const varietalStats = {};
+  allCoffees.forEach(result => {
+    if (result.varietals) {
+      result.varietals.split(',').map(v => v.trim()).forEach(varietal => {
+        if (!varietalStats[varietal]) {
+          varietalStats[varietal] = { totalScore: 0, appearances: 0, wins: 0 };
+        }
+        varietalStats[varietal].totalScore += result.score;
+        varietalStats[varietal].appearances += 1;
+      });
+    }
+  });
+  sessions.forEach(session => {
+    if (session.results && session.results.length > 0) {
+      const winner = session.results[0];
+      if (winner.varietals) {
+        winner.varietals.split(',').map(v => v.trim()).forEach(varietal => {
+          if (varietalStats[varietal]) {
+            varietalStats[varietal].wins += 1;
+          }
+        });
+      }
+    }
+  });
+  const topVarietals = Object.entries(varietalStats)
+    .map(([varietal, stats]) => ({
+      varietal,
+      avgScore: stats.totalScore / stats.appearances,
+      ...stats
+    }))
+    .sort((a, b) => b.avgScore - a.avgScore)
+    .slice(0, 10);
+
+  // Leaderboard for processing methods
+  const processStats = {};
+  allCoffees.forEach(result => {
+    if (result.processingMethod) {
+      result.processingMethod.split(',').map(p => p.trim()).forEach(process => {
+        if (!processStats[process]) {
+          processStats[process] = { totalScore: 0, appearances: 0, wins: 0 };
+        }
+        processStats[process].totalScore += result.score;
+        processStats[process].appearances += 1;
+      });
+    }
+  });
+  sessions.forEach(session => {
+    if (session.results && session.results.length > 0) {
+      const winner = session.results[0];
+      if (winner.processingMethod) {
+        winner.processingMethod.split(',').map(p => p.trim()).forEach(process => {
+          if (processStats[process]) {
+            processStats[process].wins += 1;
+          }
+        });
+      }
+    }
+  });
+  const topProcesses = Object.entries(processStats)
+    .map(([process, stats]) => ({
+      process,
+      avgScore: stats.totalScore / stats.appearances,
+      ...stats
+    }))
+    .sort((a, b) => b.avgScore - a.avgScore)
+    .slice(0, 10);
   const deleteSession = (sessionId) => {
     if (window.confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
       setSessions(prev => prev.filter(s => s.id !== sessionId));
@@ -86,6 +153,12 @@ const DashboardView = ({ sessions, setSessions, setCurrentView }) => {
                       <div className="text-sm text-gray-600">
                         {result.roaster} • {result.country}
                       </div>
+                      {result.varietals && (
+                        <div className="text-xs text-gray-500">Varietals: {result.varietals}</div>
+                      )}
+                      {result.processingMethod && (
+                        <div className="text-xs text-gray-500">Processing: {result.processingMethod}</div>
+                      )}
                     </div>
                   </div>
                   <div className="text-xl font-bold text-gray-700">
@@ -184,6 +257,62 @@ const DashboardView = ({ sessions, setSessions, setCurrentView }) => {
                   <div className="text-right">
                     <div className="text-lg font-bold text-green-600">
                       {country.avgScore.toFixed(1)}
+                    </div>
+                    <div className="text-sm text-gray-600">avg score</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {topVarietals.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">Top Performing Varietals</h2>
+            <div className="space-y-3">
+              {topVarietals.map((varietal, index) => (
+                <div key={varietal.varietal} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold mr-3">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <div className="font-medium">{varietal.varietal}</div>
+                      <div className="text-sm text-gray-600">
+                        {varietal.appearances} coffees • {varietal.wins} wins
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-purple-600">
+                      {varietal.avgScore.toFixed(1)}
+                    </div>
+                    <div className="text-sm text-gray-600">avg score</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {topProcesses.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-xl font-semibold mb-4">Top Performing Processes</h2>
+            <div className="space-y-3">
+              {topProcesses.map((process, index) => (
+                <div key={process.process} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <div className="font-medium">{process.process}</div>
+                      <div className="text-sm text-gray-600">
+                        {process.appearances} coffees • {process.wins} wins
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold text-blue-600">
+                      {process.avgScore.toFixed(1)}
                     </div>
                     <div className="text-sm text-gray-600">avg score</div>
                   </div>
