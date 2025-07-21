@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Coffee, Users, Trophy, Plus, Eye, EyeOff, Crown } from 'lucide-react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 const VotingView = ({
   currentSession,
@@ -13,30 +14,36 @@ const VotingView = ({
   calculateResults
 }) => {
   const [selectedMember, setSelectedMember] = useState('');
-  const [first, setFirst] = useState('');
-  const [second, setSecond] = useState('');
-  const [third, setThird] = useState('');
+  const [coffeeOrder, setCoffeeOrder] = useState(currentSession?.coffees.map(c => c.name) || []);
+
+  React.useEffect(() => {
+    setCoffeeOrder(currentSession?.coffees.map(c => c.name) || []);
+  }, [currentSession]);
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    const newOrder = Array.from(coffeeOrder);
+    const [removed] = newOrder.splice(result.source.index, 1);
+    newOrder.splice(result.destination.index, 0, removed);
+    setCoffeeOrder(newOrder);
+  };
 
   const handleVoteSubmit = () => {
-    if (!selectedMember || !first || !second || !third) {
-      alert('Please select a member and all three coffee rankings');
+    if (!selectedMember) {
+      alert('Please select a member');
       return;
     }
-    if (first === second || second === third || first === third) {
-      alert('Please select different coffees for each position');
+    if (coffeeOrder.length !== currentSession?.coffees.length) {
+      alert('Please rank all coffees');
       return;
     }
     submitVote({
       member: selectedMember,
-      first,
-      second,
-      third,
+      rankings: coffeeOrder,
       timestamp: new Date().toISOString()
     });
     setSelectedMember('');
-    setFirst('');
-    setSecond('');
-    setThird('');
+    setCoffeeOrder(currentSession?.coffees.map(c => c.name) || []);
     alert('Vote submitted successfully!');
   };
 
@@ -84,52 +91,39 @@ const VotingView = ({
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                🥇 First Place
+                Drag to Rank Coffees
               </label>
-              <select
-                value={first}
-                onChange={(e) => setFirst(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              >
-                <option value="">Select coffee</option>
-                {currentSession?.coffees.map(coffee => (
-                  <option key={coffee.name} value={coffee.name}>{coffee.name} - {coffee.roaster}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🥈 Second Place
-              </label>
-              <select
-                value={second}
-                onChange={(e) => setSecond(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              >
-                <option value="">Select coffee</option>
-                {currentSession?.coffees
-                  .filter(coffee => coffee.name !== first)
-                  .map(coffee => (
-                    <option key={coffee.name} value={coffee.name}>{coffee.name} - {coffee.roaster}</option>
-                  ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🥉 Third Place
-              </label>
-              <select
-                value={third}
-                onChange={(e) => setThird(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              >
-                <option value="">Select coffee</option>
-                {currentSession?.coffees
-                  .filter(coffee => coffee.name !== first && coffee.name !== second)
-                  .map(coffee => (
-                    <option key={coffee.name} value={coffee.name}>{coffee.name} - {coffee.roaster}</option>
-                  ))}
-              </select>
+              <DragDropContext onDragEnd={handleDragEnd}>
+                <Droppable droppableId="coffees">
+                  {(provided) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      className="space-y-2"
+                    >
+                      {coffeeOrder.map((coffeeName, idx) => {
+                        const coffee = currentSession?.coffees.find(c => c.name === coffeeName);
+                        return (
+                          <Draggable key={coffeeName} draggableId={coffeeName} index={idx}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className={`flex items-center space-x-4 p-3 rounded border bg-white shadow-sm ${snapshot.isDragging ? 'bg-amber-50' : ''}`}
+                              >
+                                <span className="font-bold w-6">{idx + 1}</span>
+                                <span className="flex-1">{coffee.name} - {coffee.roaster}</span>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
             </div>
             <button
               onClick={handleVoteSubmit}
