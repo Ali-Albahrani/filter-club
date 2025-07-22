@@ -197,15 +197,15 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-brand-white rounded-lg shadow-md p-6 text-center">
           <div className="text-3xl font-bold text-brand-red">{sessions.length}</div>
-          <div className="text-brand-blue">Total Sessions</div>
+          <div>Total Sessions</div>
         </div>
         <div className="bg-brand-white rounded-lg shadow-md p-6 text-center">
           <div className="text-3xl font-bold text-brand-red">{Object.keys(roasterStats).length}</div>
-          <div className="text-brand-blue">Roasters Tasted</div>
+          <div>Roasters Tasted</div>
         </div>
         <div className="bg-brand-white rounded-lg shadow-md p-6 text-center">
           <div className="text-3xl font-bold text-brand-red">{Object.keys(countryStats).length}</div>
-          <div className="text-brand-blue">Countries</div>
+          <div>Countries</div>
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -329,25 +329,25 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
         ) : (
           <div className="space-y-4">
             {sessions.slice(-5).reverse().map((session) => (
-              <div key={session.id} className="border border-brand-blue bg-brand-blue rounded-lg p-4 hover:bg-brand-red transition-colors">
+              <div key={session.id} className="group border border-brand-blue bg-brand-blue rounded-lg p-4 hover:bg-brand-red transition-colors">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <h3 className="font-medium text-brand-red">{session.name}</h3>
-                    <p className="text-sm">{session.date}</p>
+                    <h3 className="font-medium text-brand-red group-hover:text-brand-white">{session.name}</h3>
+                    <p className="text-sm group-hover:text-brand-white">{session.date}</p>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 group-hover:text-brand-white">
                     <div className="text-sm">
                       {session.votes?.length || 0} votes
                     </div>
                     <button
                       onClick={() => setSelectedSession(session)}
-                      className="text-brand-red-secondary hover:text-brand-red text-sm font-medium"
+                      className="text-brand-red group-hover:text-brand-white text-sm font-medium"
                     >
                       View Details →
                     </button>
                     <button
                       onClick={() => handleDeleteSession(session._id)}
-                      className="text-brand-red-secondary hover:text-brand-red text-sm font-medium ml-2"
+                      className="text-brand-red group-hover:text-brand-white text-sm font-medium ml-2"
                     >
                       Delete
                     </button>
@@ -355,9 +355,9 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
                 </div>
                 {session.results && session.results.length > 0 && (
                   <div className="text-sm">
-                    <span className="font-medium text-brand-red">Winner: </span>
-                    <span className="text-brand-red">{session.results[0].name}</span>
-                    <span> by {session.results[0].roaster} ({session.results[0].score} pts)</span>
+                    <span className="font-medium text-brand-red group-hover:text-brand-white">Winner: </span>
+                    <span className="text-brand-red group-hover:text-brand-white">{session.results[0].name}</span>
+                    <span className="group-hover:text-brand-white"> by {session.results[0].roaster} ({session.results[0].score} pts)</span>
                   </div>
                 )}
               </div>
