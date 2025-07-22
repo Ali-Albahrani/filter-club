@@ -146,7 +146,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
           <h2 className="text-xl font-semibold mb-6 text-center text-brand-red">🏆 Full Scoreboard</h2>
           <div className="space-y-4">
             {selectedSession.results?.map((result, index) => (
-              <div key={result.name} className={`p-4 rounded-lg border-2 ${
+              <div key={result.name + '-' + index} className={`p-4 rounded-lg border-2 ${
                 index === 0 ? 'border-brand-blue bg-brand-blue' :
                 index === 1 ? 'border-brand-blue bg-brand-blue' :
                 index === 2 ? 'border-brand-blue bg-brand-blue' :
@@ -223,7 +223,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Top Performing Roasters</h2>
             <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin"> {/* scrollable */}
               {topRoasters.map((roaster, index) => (
-                <div key={roaster.roaster} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
+                <div key={roaster.roaster + '-' + index} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-brand-red text-brand-white rounded-full flex items-center justify-center font-bold mr-3">
                       {index + 1}
@@ -251,7 +251,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Top Performing Countries</h2>
             <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin"> {/* scrollable */}
               {topCountries.map((country, index) => (
-                <div key={country.country} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
+                <div key={country.country + '-' + index} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-brand-red text-brand-white rounded-full flex items-center justify-center font-bold mr-3">
                       {index + 1}
@@ -279,7 +279,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Top Performing Varietals</h2>
             <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin"> {/* scrollable */}
               {topVarietals.map((varietal, index) => (
-                <div key={varietal.varietal} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
+                <div key={varietal.varietal + '-' + index} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-brand-red text-brand-white rounded-full flex items-center justify-center font-bold mr-3">
                       {index + 1}
@@ -307,7 +307,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Top Performing Processes</h2>
             <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin"> {/* scrollable */}
               {topProcesses.map((process, index) => (
-                <div key={process.process} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
+                <div key={process.process + '-' + index} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
                   <div className="flex items-center">
                     <div className="w-8 h-8 bg-brand-red text-brand-white rounded-full flex items-center justify-center font-bold mr-3">
                       {index + 1}
@@ -338,7 +338,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
         ) : (
           <div className="space-y-4">
             {sessions.slice(-5).reverse().map((session) => (
-              <div key={session.id} className="group border border-brand-blue bg-brand-blue rounded-lg p-4 hover:bg-brand-red transition-colors">
+              <div key={session._id} className="group border border-brand-blue bg-brand-blue rounded-lg p-4 hover:bg-brand-red transition-colors">
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h3 className="font-medium text-brand-red group-hover:text-brand-white">{session.name}</h3>
