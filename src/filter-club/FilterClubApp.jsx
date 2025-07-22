@@ -134,7 +134,7 @@ const FilterClubApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-brand-white">
+    <div className="min-h-screen bg-brand-white pb-28">
       {currentView === 'setup' && (
         <SetupView createNewSession={createNewSession} />
       )}
