@@ -59,6 +59,16 @@ const VotingView = ({
   const voteCount = votes.length;
   const totalMembers = currentSession?.members.length || 0;
 
+  // Map coffee name to blind label (Coffee 1, Coffee 2, ...)
+  const coffeeBlindLabels = React.useMemo(() => {
+    if (!currentSession?.coffees) return {};
+    const map = {};
+    currentSession.coffees.forEach((c, i) => {
+      map[c.name] = `Coffee ${i + 1}`;
+    });
+    return map;
+  }, [currentSession]);
+
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="text-center mb-8">
@@ -123,7 +133,7 @@ const VotingView = ({
                                 className={`flex items-center space-x-4 p-3 rounded border bg-brand-white shadow-sm ${snapshot.isDragging ? 'bg-brand-red-secondary' : ''}`}
                               >
                                 <span className="font-bold w-6 text-brand-red">{idx + 1}</span>
-                                <span className="flex-1 text-brand-red">{coffee.name} - {coffee.roaster}</span>
+                                <span className="flex-1 text-brand-red">{coffeeBlindLabels[coffeeName]}</span>
                               </div>
                             )}
                           </Draggable>
