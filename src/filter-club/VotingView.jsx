@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Coffee, Users, Trophy, Plus, Eye, EyeOff, Crown } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import AlertModal from './AlertModal';
 
 const VotingView = ({
   currentSession,
@@ -11,13 +12,16 @@ const VotingView = ({
   setResultsRevealed,
   submitVote,
   finishSession,
-  calculateResults
+  calculateResults,
+  deleteSession,
+  setCurrentView
 }) => {
   const [selectedMember, setSelectedMember] = useState('');
   const [coffeeOrder, setCoffeeOrder] = useState(currentSession?.coffees.map(c => c.name) || []);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
   React.useEffect(() => {
     setCoffeeOrder(currentSession?.coffees.map(c => c.name) || []);
@@ -190,6 +194,12 @@ const VotingView = ({
           >
             Finish Session
           </button>
+          <button
+            onClick={() => setDeleteModalOpen(true)}
+            className="flex items-center px-4 py-2 rounded-lg font-medium bg-brand-red text-brand-white hover:bg-brand-red-secondary transition-colors"
+          >
+            Delete Session
+          </button>
         </div>
       </div>
       {/* Results */}
@@ -225,6 +235,30 @@ const VotingView = ({
           </div>
         </div>
       )}
+      <AlertModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        message="Are you sure you want to delete this session? This cannot be undone."
+      >
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={async () => {
+              await deleteSession(currentSession._id);
+              setDeleteModalOpen(false);
+              setCurrentView('dashboard');
+            }}
+            className="bg-brand-red text-brand-white px-6 py-2 rounded-lg hover:bg-brand-red-secondary transition-colors font-medium"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => setDeleteModalOpen(false)}
+            className="bg-brand-blue text-brand-white px-6 py-2 rounded-lg hover:bg-brand-blue transition-colors font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </AlertModal>
     </div>
   );
 };

@@ -153,6 +153,8 @@ const FilterClubApp = () => {
           submitVote={submitVote}
           finishSession={finishSession}
           calculateResults={calculateResults}
+          deleteSession={deleteSession}
+          setCurrentView={setCurrentView}
         />
       )}
       {currentView === 'dashboard' && (
