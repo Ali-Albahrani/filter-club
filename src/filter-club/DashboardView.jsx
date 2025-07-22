@@ -36,7 +36,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
       ...stats
     }))
     .sort((a, b) => b.avgScore - a.avgScore)
-    .slice(0, 10);
+    .slice(0, 5); // changed from 10 to 5
   const topCountries = Object.entries(countryStats)
     .map(([country, stats]) => ({
       country,
@@ -44,7 +44,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
       ...stats
     }))
     .sort((a, b) => b.avgScore - a.avgScore)
-    .slice(0, 10);
+    .slice(0, 5); // changed from 10 to 5
   // Leaderboard for varietals
   const varietalStats = {};
   allCoffees.forEach(result => {
@@ -77,7 +77,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
       ...stats
     }))
     .sort((a, b) => b.avgScore - a.avgScore)
-    .slice(0, 10);
+    .slice(0, 5); // changed from 10 to 5
 
   // Leaderboard for processing methods
   const processStats = {};
@@ -111,7 +111,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
       ...stats
     }))
     .sort((a, b) => b.avgScore - a.avgScore)
-    .slice(0, 10);
+    .slice(0, 5); // changed from 10 to 5
   const handleDeleteSession = (sessionId) => {
     if (window.confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
       deleteSession(sessionId);
@@ -212,7 +212,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
         {topRoasters.length > 0 && (
           <div className="bg-brand-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Top Performing Roasters</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin"> {/* scrollable */}
               {topRoasters.map((roaster, index) => (
                 <div key={roaster.roaster} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
                   <div className="flex items-center">
@@ -240,7 +240,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
         {topCountries.length > 0 && (
           <div className="bg-brand-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Top Performing Countries</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin"> {/* scrollable */}
               {topCountries.map((country, index) => (
                 <div key={country.country} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
                   <div className="flex items-center">
@@ -268,7 +268,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
         {topVarietals.length > 0 && (
           <div className="bg-brand-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Top Performing Varietals</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin"> {/* scrollable */}
               {topVarietals.map((varietal, index) => (
                 <div key={varietal.varietal} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
                   <div className="flex items-center">
@@ -296,7 +296,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
         {topProcesses.length > 0 && (
           <div className="bg-brand-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Top Performing Processes</h2>
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin"> {/* scrollable */}
               {topProcesses.map((process, index) => (
                 <div key={process.process} className="flex items-center justify-between p-3 bg-brand-blue rounded-lg">
                   <div className="flex items-center">
