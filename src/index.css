@@ -39,3 +39,11 @@ code {
   scrollbar-width: thin;
   scrollbar-color: #a3a3a3 transparent; /* For Firefox, neutral grey */
 }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.2s ease;
+}

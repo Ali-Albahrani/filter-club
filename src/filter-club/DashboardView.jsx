@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Trophy, BarChart3, Crown } from 'lucide-react';
+import AlertModal from './AlertModal';
 
 const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
   const [selectedSession, setSelectedSession] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [sessionToDelete, setSessionToDelete] = useState(null);
   const allCoffees = sessions.flatMap(s => s.results || []);
   const roasterStats = {};
   const countryStats = {};
@@ -113,9 +116,15 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
     .sort((a, b) => b.avgScore - a.avgScore)
     .slice(0, 5); // changed from 10 to 5
   const handleDeleteSession = (sessionId) => {
-    if (window.confirm('Are you sure you want to delete this session? This action cannot be undone.')) {
-      deleteSession(sessionId);
+    setSessionToDelete(sessionId);
+    setConfirmOpen(true);
+  };
+  const confirmDelete = () => {
+    if (sessionToDelete) {
+      deleteSession(sessionToDelete);
+      setSessionToDelete(null);
     }
+    setConfirmOpen(false);
   };
   if (selectedSession) {
     return (
@@ -373,6 +382,18 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
           Start New Session
         </button>
       </div>
+      <AlertModal
+        open={confirmOpen}
+        onClose={() => { setConfirmOpen(false); setSessionToDelete(null); }}
+        message={"Are you sure you want to delete this session? This action cannot be undone."}
+      >
+        <button
+          onClick={confirmDelete}
+          className="bg-brand-red text-brand-white px-6 py-2 rounded-lg hover:bg-brand-red-secondary transition-colors font-medium mt-4"
+        >
+          Delete
+        </button>
+      </AlertModal>
     </div>
   );
 };

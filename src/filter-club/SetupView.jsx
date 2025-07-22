@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Coffee, Plus } from 'lucide-react';
+import AlertModal from './AlertModal';
 
 const SetupView = ({ createNewSession }) => {
   const [coffees, setCoffees] = useState([{ name: '', roaster: '', country: '', varietals: '', processingMethod: '' }]);
   const [members, setMembers] = useState(['']);
   const [sessionName, setSessionName] = useState('');
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
   const addCoffee = () => setCoffees(prev => [...prev, { name: '', roaster: '', country: '', varietals: '', processingMethod: '' }]);
   const addMember = () => setMembers(prev => [...prev, '']);
@@ -23,7 +26,8 @@ const SetupView = ({ createNewSession }) => {
     const validCoffees = coffees.filter(c => c.name.trim() && c.roaster.trim() && c.country.trim());
     const validMembers = members.filter(m => m.trim());
     if (validCoffees.length < 2 || validMembers.length < 1) {
-      alert('Please add at least 2 complete coffees (with name, roaster, and country) and 1 member');
+      setAlertMessage('Please add at least 2 complete coffees (with name, roaster, and country) and 1 member');
+      setAlertOpen(true);
       return;
     }
     createNewSession({
@@ -133,6 +137,7 @@ const SetupView = ({ createNewSession }) => {
           Start Cupping Session
         </button>
       </div>
+      <AlertModal open={alertOpen} onClose={() => setAlertOpen(false)} message={alertMessage} />
     </div>
   );
 };
