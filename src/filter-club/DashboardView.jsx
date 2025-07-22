@@ -119,7 +119,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
   };
   if (selectedSession) {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-6 ">
         <div className="mb-6">
           <button
             onClick={() => setSelectedSession(null)}
@@ -130,7 +130,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
           <div className="text-center">
             <Trophy className="w-12 h-12 mx-auto mb-4 text-brand-red" />
             <h1 className="text-3xl font-bold text-brand-red mb-2">{selectedSession.name}</h1>
-            <p className="text-brand-blue">{selectedSession.date} • {selectedSession.votes?.length || 0} votes</p>
+            <p>{selectedSession.date} • {selectedSession.votes?.length || 0} votes</p>
           </div>
         </div>
         <div className="bg-brand-white rounded-lg shadow-md p-6 mb-6">
@@ -138,26 +138,26 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
           <div className="space-y-4">
             {selectedSession.results?.map((result, index) => (
               <div key={result.name} className={`p-4 rounded-lg border-2 ${
-                index === 0 ? 'border-brand-red-secondary bg-brand-red-secondary' :
+                index === 0 ? 'border-brand-blue bg-brand-blue' :
                 index === 1 ? 'border-brand-blue bg-brand-blue' :
-                index === 2 ? 'border-brand-red bg-brand-red' :
-                'border-brand-blue bg-brand-white'
+                index === 2 ? 'border-brand-blue bg-brand-blue' :
+                'border-brand-blue bg-brand-blue'
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     {index === 0 && <Crown className="w-6 h-6 text-brand-red mr-2" />}
                     <div>
-                      <span className="font-medium text-lg">
+                      <span className="font-medium text-lg text-brand-red">
                         #{index + 1} {result.name}
                       </span>
-                      <div className="text-sm text-brand-blue">
+                      <div className="text-sm">
                         {result.roaster} • {result.country}
                       </div>
                       {result.varietals && (
-                        <div className="text-xs text-brand-blue">Varietals: {result.varietals}</div>
+                        <div className="text-xs">Varietals: {result.varietals}</div>
                       )}
                       {result.processingMethod && (
-                        <div className="text-xs text-brand-blue">Processing: {result.processingMethod}</div>
+                        <div className="text-xs">Processing: {result.processingMethod}</div>
                       )}
                     </div>
                   </div>
@@ -169,7 +169,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
             )) || []}
           </div>
         </div>
-        {selectedSession.votes && selectedSession.votes.length > 0 && (
+        {/* {selectedSession.votes && selectedSession.votes.length > 0 && (
           <div className="bg-brand-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-brand-red">Individual Votes</h2>
             <div className="space-y-3">
@@ -183,7 +183,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
               ))}
             </div>
           </div>
-        )}
+        )} */}
       </div>
     );
   }
@@ -230,7 +230,7 @@ const DashboardView = ({ sessions, setCurrentView, deleteSession }) => {
                     <div className="text-lg font-bold text-brand-red">
                       {roaster.avgScore.toFixed(1)}
                     </div>
-                    <div className="text-sm text-brand-blue">avg score</div>
+                    <div className="text-sm">avg score</div>
                   </div>
                 </div>
               ))}
