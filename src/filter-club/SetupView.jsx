@@ -12,6 +12,14 @@ const SetupView = ({ createNewSession }) => {
   const addCoffee = () => setCoffees(prev => [...prev, { name: '', roaster: '', country: '', varietals: '', processingMethod: '' }]);
   const addMember = () => setMembers(prev => [...prev, '']);
 
+  const removeCoffee = (index) => {
+    setCoffees(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeMember = (index) => {
+    setMembers(prev => prev.filter((_, i) => i !== index));
+  };
+
   const updateCoffee = (index, field, value) => {
     setCoffees(prev => prev.map((coffee, i) =>
       i === index ? { ...coffee, [field]: value } : coffee
@@ -62,7 +70,7 @@ const SetupView = ({ createNewSession }) => {
             Coffees
           </label>
           {coffees.map((coffee, index) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3 p-3 border border-brand-blue rounded-lg">
+            <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3 p-3 border border-brand-blue rounded-lg relative">
               <input
                 type="text"
                 value={coffee.name}
@@ -98,6 +106,16 @@ const SetupView = ({ createNewSession }) => {
                 className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
                 placeholder="Process"
               />
+              {coffees.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeCoffee(index)}
+                  className="absolute top-2 right-2 text-brand-red hover:text-brand-red-secondary text-lg font-bold"
+                  aria-label="Remove coffee"
+                >
+                  ×
+                </button>
+              )}
             </div>
           ))}
           <button
@@ -113,14 +131,25 @@ const SetupView = ({ createNewSession }) => {
             Members
           </label>
           {members.map((member, index) => (
-            <input
-              key={index}
-              type="text"
-              value={member}
-              onChange={(e) => updateMember(index, e.target.value)}
-              className="w-full p-3 border border-brand-blue rounded-lg mb-2 focus:ring-2 focus:ring-brand-red focus:border-transparent"
-              placeholder={`Member ${index + 1}`}
-            />
+            <div key={index} className="relative mb-2">
+              <input
+                type="text"
+                value={member}
+                onChange={(e) => updateMember(index, e.target.value)}
+                className="w-full p-3 border border-brand-blue rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
+                placeholder={`Member ${index + 1}`}
+              />
+              {members.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeMember(index)}
+                  className="absolute top-1 right-2 text-brand-red hover:text-brand-red-secondary text-lg font-bold"
+                  aria-label="Remove member"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           ))}
           <button
             onClick={addMember}
