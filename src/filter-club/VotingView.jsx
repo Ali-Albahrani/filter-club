@@ -76,16 +76,16 @@ const VotingView = ({
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="text-center mb-8">
-        <Coffee className="w-12 h-12 mx-auto mb-4 text-brand-red" />
-        <h1 className="text-2xl font-bold text-brand-red mb-2">{currentSession?.name}</h1>
+        <Coffee className="w-12 h-12 mx-auto mb-4 text-brand-blue" />
+        <h1 className="text-2xl font-bold text-brand-blue mb-2">{currentSession?.name}</h1>
         <div className="flex items-center justify-center space-x-4 text-sm text-brand-blue">
           <div className="flex items-center">
             <Users className="w-4 h-4 mr-1" />
             {voteCount} of {totalMembers} voted
           </div>
           {votingOpen && (
-            <div className="flex items-center text-brand-red">
-              <div className="w-2 h-2 bg-brand-red rounded-full mr-2 animate-pulse"></div>
+            <div className="flex items-center text-brand-blue">
+              <div className="w-2 h-2 bg-brand-blue rounded-full mr-2 animate-pulse"></div>
               Voting Open
             </div>
           )}
