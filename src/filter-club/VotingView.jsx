@@ -17,6 +17,7 @@ const VotingView = ({
   const [coffeeOrder, setCoffeeOrder] = useState(currentSession?.coffees.map(c => c.name) || []);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   React.useEffect(() => {
     setCoffeeOrder(currentSession?.coffees.map(c => c.name) || []);
@@ -32,6 +33,7 @@ const VotingView = ({
 
   const handleVoteSubmit = async () => {
     setError('');
+    setSuccessMessage('');
     if (!selectedMember) {
       setError('Please select a member');
       return;
@@ -49,6 +51,8 @@ const VotingView = ({
       });
       setSelectedMember('');
       setCoffeeOrder(currentSession?.coffees.map(c => c.name) || []);
+      setSuccessMessage('Your vote has been submitted!');
+      setTimeout(() => setSuccessMessage(''), 2000);
     } catch (err) {
       setError('Failed to submit vote. Please try again.');
     } finally {
@@ -90,6 +94,7 @@ const VotingView = ({
       {votingOpen && (
         <div className="bg-brand-white rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4 text-brand-red">Cast Your Vote</h2>
+          {successMessage && <div className="text-green-600 mb-2 animate-fade-in">{successMessage}</div>}
           {error && <div className="text-red-600 mb-2">{error}</div>}
           <div className="space-y-4">
             <div>
