@@ -173,7 +173,7 @@ const VotingView = ({
           <button
             onClick={() => setResultsRevealed(!resultsRevealed)}
             disabled={votingOpen}
-            className="flex items-center px-4 py-2 rounded-lg font-medium bg-brand-blue text-brand-red hover:bg-brand-red-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center px-4 py-2 rounded-lg font-medium bg-brand-white text-brand-red hover:bg-brand-red-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Trophy className="w-4 h-4 mr-2" />
             {resultsRevealed ? 'Hide Results' : 'Reveal Results'}
