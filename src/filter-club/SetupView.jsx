@@ -36,76 +36,76 @@ const SetupView = ({ createNewSession }) => {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="text-center mb-8">
-        <Coffee className="w-12 h-12 mx-auto mb-4 text-amber-600" />
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Filter Club</h1>
-        <p className="text-gray-600">Set up your coffee cupping session</p>
+        <Coffee className="w-12 h-12 mx-auto mb-4 text-brand-red" />
+        <h1 className="text-3xl font-bold text-brand-red mb-2">Filter Club</h1>
+        <p className="text-brand-red">Set up your coffee cupping session</p>
       </div>
-      <div className="bg-white rounded-lg shadow-md p-6 space-y-6">
+      <div className="bg-brand-blue rounded-lg shadow-md p-6 space-y-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-brand-red mb-2">
             Session Name (Optional)
           </label>
           <input
             type="text"
             value={sessionName}
             onChange={(e) => setSessionName(e.target.value)}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+            className="w-full p-3 border border-brand-white rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
             placeholder="e.g., Ethiopian Tasting"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-brand-red mb-2">
             Coffees
           </label>
           {coffees.map((coffee, index) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3 p-3 border border-gray-200 rounded-lg">
+            <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3 p-3 border border-brand-blue rounded-lg">
               <input
                 type="text"
                 value={coffee.name}
                 onChange={(e) => updateCoffee(index, 'name', e.target.value)}
-                className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
                 placeholder="Name"
               />
               <input
                 type="text"
                 value={coffee.roaster}
                 onChange={(e) => updateCoffee(index, 'roaster', e.target.value)}
-                className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
                 placeholder="Roaster"
               />
               <input
                 type="text"
                 value={coffee.country}
                 onChange={(e) => updateCoffee(index, 'country', e.target.value)}
-                className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
                 placeholder="Country"
               />
               <input
                 type="text"
                 value={coffee.varietals}
                 onChange={(e) => updateCoffee(index, 'varietals', e.target.value)}
-                className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
                 placeholder="Varietals"
               />
               <input
                 type="text"
                 value={coffee.processingMethod}
                 onChange={(e) => updateCoffee(index, 'processingMethod', e.target.value)}
-                className="p-2 border border-gray-300 rounded focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
                 placeholder="Process"
               />
             </div>
           ))}
           <button
             onClick={addCoffee}
-            className="flex items-center text-amber-600 hover:text-amber-700 font-medium"
+            className="flex items-center text-brand-red hover:text-brand-red-secondary font-medium"
           >
             <Plus className="w-4 h-4 mr-1" />
             Add Coffee
           </button>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-brand-red mb-2">
             Members
           </label>
           {members.map((member, index) => (
@@ -114,13 +114,13 @@ const SetupView = ({ createNewSession }) => {
               type="text"
               value={member}
               onChange={(e) => updateMember(index, e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg mb-2 focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+              className="w-full p-3 border border-brand-blue rounded-lg mb-2 focus:ring-2 focus:ring-brand-red focus:border-transparent"
               placeholder={`Member ${index + 1}`}
             />
           ))}
           <button
             onClick={addMember}
-            className="flex items-center text-amber-600 hover:text-amber-700 font-medium"
+            className="flex items-center text-brand-red hover:text-brand-red-secondary font-medium"
           >
             <Plus className="w-4 h-4 mr-1" />
             Add Member
@@ -128,7 +128,7 @@ const SetupView = ({ createNewSession }) => {
         </div>
         <button
           onClick={handleSubmit}
-          className="w-full bg-amber-600 text-white py-3 px-4 rounded-lg hover:bg-amber-700 transition-colors font-medium"
+          className="w-full bg-brand-red text-brand-white py-3 px-4 rounded-lg hover:bg-brand-red-secondary transition-colors font-medium"
         >
           Start Cupping Session
         </button>

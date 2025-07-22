@@ -15,6 +15,8 @@ const VotingView = ({
 }) => {
   const [selectedMember, setSelectedMember] = useState('');
   const [coffeeOrder, setCoffeeOrder] = useState(currentSession?.coffees.map(c => c.name) || []);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   React.useEffect(() => {
     setCoffeeOrder(currentSession?.coffees.map(c => c.name) || []);
@@ -28,23 +30,30 @@ const VotingView = ({
     setCoffeeOrder(newOrder);
   };
 
-  const handleVoteSubmit = () => {
+  const handleVoteSubmit = async () => {
+    setError('');
     if (!selectedMember) {
-      alert('Please select a member');
+      setError('Please select a member');
       return;
     }
     if (coffeeOrder.length !== currentSession?.coffees.length) {
-      alert('Please rank all coffees');
+      setError('Please rank all coffees');
       return;
     }
-    submitVote({
-      member: selectedMember,
-      rankings: coffeeOrder,
-      timestamp: new Date().toISOString()
-    });
-    setSelectedMember('');
-    setCoffeeOrder(currentSession?.coffees.map(c => c.name) || []);
-    alert('Vote submitted successfully!');
+    setSubmitting(true);
+    try {
+      await submitVote({
+        member: selectedMember,
+        rankings: coffeeOrder,
+        timestamp: new Date().toISOString()
+      });
+      setSelectedMember('');
+      setCoffeeOrder(currentSession?.coffees.map(c => c.name) || []);
+    } catch (err) {
+      setError('Failed to submit vote. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const voteCount = votes.length;
@@ -53,33 +62,34 @@ const VotingView = ({
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="text-center mb-8">
-        <Coffee className="w-12 h-12 mx-auto mb-4 text-amber-600" />
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">{currentSession?.name}</h1>
-        <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
+        <Coffee className="w-12 h-12 mx-auto mb-4 text-brand-red" />
+        <h1 className="text-2xl font-bold text-brand-red mb-2">{currentSession?.name}</h1>
+        <div className="flex items-center justify-center space-x-4 text-sm text-brand-blue">
           <div className="flex items-center">
             <Users className="w-4 h-4 mr-1" />
             {voteCount} of {totalMembers} voted
           </div>
           {votingOpen && (
-            <div className="flex items-center text-green-600">
-              <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+            <div className="flex items-center text-brand-red">
+              <div className="w-2 h-2 bg-brand-red rounded-full mr-2 animate-pulse"></div>
               Voting Open
             </div>
           )}
         </div>
       </div>
       {votingOpen && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">Cast Your Vote</h2>
+        <div className="bg-brand-white rounded-lg shadow-md p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4 text-brand-red">Cast Your Vote</h2>
+          {error && <div className="text-red-600 mb-2">{error}</div>}
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-red mb-2">
                 Your Name
               </label>
               <select
                 value={selectedMember}
                 onChange={(e) => setSelectedMember(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="w-full p-3 border border-brand-blue rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
               >
                 <option value="">Select your name</option>
                 {currentSession?.members
@@ -90,7 +100,7 @@ const VotingView = ({
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-brand-red mb-2">
                 Drag to Rank Coffees
               </label>
               <DragDropContext onDragEnd={handleDragEnd}>
@@ -110,10 +120,10 @@ const VotingView = ({
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className={`flex items-center space-x-4 p-3 rounded border bg-white shadow-sm ${snapshot.isDragging ? 'bg-amber-50' : ''}`}
+                                className={`flex items-center space-x-4 p-3 rounded border bg-brand-white shadow-sm ${snapshot.isDragging ? 'bg-brand-red-secondary' : ''}`}
                               >
-                                <span className="font-bold w-6">{idx + 1}</span>
-                                <span className="flex-1">{coffee.name} - {coffee.roaster}</span>
+                                <span className="font-bold w-6 text-brand-red">{idx + 1}</span>
+                                <span className="flex-1 text-brand-red">{coffee.name} - {coffee.roaster}</span>
                               </div>
                             )}
                           </Draggable>
@@ -127,23 +137,24 @@ const VotingView = ({
             </div>
             <button
               onClick={handleVoteSubmit}
-              className="w-full bg-amber-600 text-white py-3 px-4 rounded-lg hover:bg-amber-700 transition-colors font-medium"
+              className="w-full bg-brand-red text-brand-white py-3 px-4 rounded-lg hover:bg-brand-red-secondary transition-colors font-medium disabled:opacity-50"
+              disabled={submitting}
             >
-              Submit Vote
+              {submitting ? 'Submitting...' : 'Submit Vote'}
             </button>
           </div>
         </div>
       )}
       {/* Admin Controls */}
-      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-        <h3 className="font-semibold text-gray-700">Session Controls</h3>
+      <div className="bg-brand-blue rounded-lg p-4 space-y-3">
+        <h3 className="font-semibold text-brand-red">Session Controls</h3>
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setVotingOpen(!votingOpen)}
             className={`flex items-center px-4 py-2 rounded-lg font-medium transition-colors ${
               votingOpen 
-                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
-                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                ? 'bg-brand-red-secondary text-brand-red hover:bg-brand-red' 
+                : 'bg-brand-white text-brand-red hover:bg-brand-red-secondary'
             }`}
           >
             {votingOpen ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
@@ -152,7 +163,7 @@ const VotingView = ({
           <button
             onClick={() => setResultsRevealed(!resultsRevealed)}
             disabled={votingOpen}
-            className="flex items-center px-4 py-2 rounded-lg font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center px-4 py-2 rounded-lg font-medium bg-brand-blue text-brand-red hover:bg-brand-red-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Trophy className="w-4 h-4 mr-2" />
             {resultsRevealed ? 'Hide Results' : 'Reveal Results'}
@@ -160,7 +171,7 @@ const VotingView = ({
           <button
             onClick={finishSession}
             disabled={votingOpen || voteCount === 0}
-            className="flex items-center px-4 py-2 rounded-lg font-medium bg-green-100 text-green-700 hover:bg-green-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center px-4 py-2 rounded-lg font-medium bg-brand-white text-brand-red hover:bg-brand-red-secondary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Finish Session
           </button>
@@ -168,29 +179,29 @@ const VotingView = ({
       </div>
       {/* Results */}
       {resultsRevealed && !votingOpen && (
-        <div className="mt-6 bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-6 text-center">🏆 Results</h2>
+        <div className="mt-6 bg-brand-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold mb-6 text-center text-brand-red">🏆 Results</h2>
           <div className="space-y-4">
             {calculateResults().map((result, index) => (
               <div key={result.name} className={`p-4 rounded-lg border-2 ${
-                index === 0 ? 'border-yellow-400 bg-yellow-50' :
-                index === 1 ? 'border-gray-400 bg-gray-50' :
-                index === 2 ? 'border-orange-400 bg-orange-50' :
-                'border-gray-200 bg-white'
+                index === 0 ? 'border-brand-red bg-brand-red-secondary' :
+                index === 1 ? 'border-brand-blue bg-brand-blue' :
+                index === 2 ? 'border-brand-red-secondary bg-brand-white' :
+                'border-brand-blue bg-brand-white'
               }`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    {index === 0 && <Crown className="w-6 h-6 text-yellow-500 mr-2" />}
+                    {index === 0 && <Crown className="w-6 h-6 text-brand-red mr-2" />}
                     <div>
-                      <span className="font-medium text-lg">
+                      <span className="font-medium text-lg text-brand-red">
                         #{index + 1} {result.name}
                       </span>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-brand-blue">
                         {result.roaster} • {result.country}
                       </div>
                     </div>
                   </div>
-                  <div className="text-xl font-bold text-gray-700">
+                  <div className="text-xl font-bold text-brand-red">
                     {result.score} pts
                   </div>
                 </div>

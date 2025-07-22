@@ -4,6 +4,8 @@ import SetupView from './SetupView';
 import VotingView from './VotingView';
 import DashboardView from './DashboardView';
 
+const API_URL = 'http://localhost:5000/api/sessions';
+
 const FilterClubApp = () => {
   const [currentView, setCurrentView] = useState('setup');
   const [sessions, setSessions] = useState([]);
@@ -12,50 +14,68 @@ const FilterClubApp = () => {
   const [votingOpen, setVotingOpen] = useState(false);
   const [resultsRevealed, setResultsRevealed] = useState(false);
 
-  // Load data from localStorage on component mount
+  // Load sessions from backend on mount
   useEffect(() => {
-    const savedSessions = JSON.parse(localStorage.getItem('filterClubSessions') || '[]');
-    setSessions(savedSessions);
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setSessions(data));
   }, []);
 
-  // Save sessions to localStorage whenever sessions change
-  useEffect(() => {
-    localStorage.setItem('filterClubSessions', JSON.stringify(sessions));
-  }, [sessions]);
-
-  const createNewSession = (sessionData) => {
+  // Create a new session in backend
+  const createNewSession = async (sessionData) => {
     const newSession = {
-      id: Date.now(),
       date: new Date().toISOString().split('T')[0],
       ...sessionData
     };
-    setCurrentSession(newSession);
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newSession)
+    });
+    const created = await res.json();
+    setCurrentSession(created);
     setVotes([]);
     setVotingOpen(true);
     setResultsRevealed(false);
     setCurrentView('voting');
+    // Refresh sessions list
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setSessions(data));
   };
 
-  const submitVote = (voteData) => {
-    setVotes(prev => {
-      const existingVoteIndex = prev.findIndex(v => v.member === voteData.member);
-      let updatedVotes;
-      if (existingVoteIndex >= 0) {
-        updatedVotes = [...prev];
-        updatedVotes[existingVoteIndex] = voteData;
-      } else {
-        updatedVotes = [...prev, voteData];
-      }
-      // Auto-close voting if everyone has voted
-      if (updatedVotes.length === currentSession?.members.length) {
-        setVotingOpen(false);
-      }
-      return updatedVotes;
+  // Submit a vote (update session in backend)
+  const submitVote = async (voteData) => {
+    const updatedVotes = [...(currentSession.votes || [])];
+    const existingVoteIndex = updatedVotes.findIndex(v => v.member === voteData.member);
+    if (existingVoteIndex >= 0) {
+      updatedVotes[existingVoteIndex] = voteData;
+    } else {
+      updatedVotes.push(voteData);
+    }
+    // Auto-close voting if everyone has voted
+    if (updatedVotes.length === currentSession.members.length) {
+      setVotingOpen(false);
+    }
+    // Update session in backend
+    const updatedSession = { ...currentSession, votes: updatedVotes };
+    const res = await fetch(`${API_URL}/${currentSession._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatedSession)
     });
+    const saved = await res.json();
+    setCurrentSession(saved);
+    setVotes(saved.votes || []);
+    // Refresh sessions list
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setSessions(data));
   };
 
+  // Calculate results (client-side)
   const calculateResults = () => {
-    if (!currentSession || votes.length === 0) return [];
+    if (!currentSession || (currentSession.votes || []).length === 0) return [];
     const scores = {};
     currentSession.coffees.forEach(coffee => {
       scores[coffee.name] = {
@@ -67,40 +87,61 @@ const FilterClubApp = () => {
         processingMethod: coffee.processingMethod
       };
     });
-    votes.forEach(vote => {
-      if (vote.first && scores[vote.first]) scores[vote.first].score += 3;
-      if (vote.second && scores[vote.second]) scores[vote.second].score += 2;
-      if (vote.third && scores[vote.third]) scores[vote.third].score += 1;
+    (currentSession.votes || []).forEach(vote => {
+      if (vote.rankings && vote.rankings.length > 0) {
+        if (vote.rankings[0] && scores[vote.rankings[0]]) scores[vote.rankings[0]].score += 3;
+        if (vote.rankings[1] && scores[vote.rankings[1]]) scores[vote.rankings[1]].score += 2;
+        if (vote.rankings[2] && scores[vote.rankings[2]]) scores[vote.rankings[2]].score += 1;
+      }
     });
     return Object.values(scores).sort((a, b) => b.score - a.score);
   };
 
-  const finishSession = () => {
+  // Finish session (update session in backend)
+  const finishSession = async () => {
     if (!currentSession) return;
     const results = calculateResults();
     const completedSession = {
       ...currentSession,
-      votes: votes,
+      votes: currentSession.votes || [],
       results: results,
       completed: true
     };
-    setSessions(prev => [...prev, completedSession]);
+    const res = await fetch(`${API_URL}/${currentSession._id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(completedSession)
+    });
+    const saved = await res.json();
     setCurrentSession(null);
     setVotes([]);
     setVotingOpen(false);
     setResultsRevealed(false);
     setCurrentView('dashboard');
+    // Refresh sessions list
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setSessions(data));
+  };
+
+  // Delete a session
+  const deleteSession = async (id) => {
+    await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+    // Refresh sessions list
+    fetch(API_URL)
+      .then(res => res.json())
+      .then(data => setSessions(data));
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+    <div className="min-h-screen bg-brand-white">
       {currentView === 'setup' && (
         <SetupView createNewSession={createNewSession} />
       )}
       {currentView === 'voting' && (
         <VotingView
           currentSession={currentSession}
-          votes={votes}
+          votes={currentSession?.votes || []}
           votingOpen={votingOpen}
           setVotingOpen={setVotingOpen}
           resultsRevealed={resultsRevealed}
@@ -115,15 +156,16 @@ const FilterClubApp = () => {
           sessions={sessions}
           setSessions={setSessions}
           setCurrentView={setCurrentView}
+          deleteSession={deleteSession}
         />
       )}
       {/* Navigation */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2">
-        <div className="bg-white rounded-full shadow-lg p-2 flex space-x-2">
+        <div className="bg-brand-white rounded-full shadow-lg p-2 flex space-x-2">
           <button
             onClick={() => setCurrentView('setup')}
             className={`p-3 rounded-full transition-colors ${
-              currentView === 'setup' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+              currentView === 'setup' ? 'bg-brand-red text-brand-white' : 'text-brand-red hover:bg-brand-red-secondary'
             }`}
           >
             <Plus className="w-5 h-5" />
@@ -131,7 +173,7 @@ const FilterClubApp = () => {
           <button
             onClick={() => setCurrentView('voting')}
             className={`p-3 rounded-full transition-colors ${
-              currentView === 'voting' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+              currentView === 'voting' ? 'bg-brand-red text-brand-white' : 'text-brand-red hover:bg-brand-red-secondary'
             }`}
             disabled={!currentSession}
           >
@@ -140,7 +182,7 @@ const FilterClubApp = () => {
           <button
             onClick={() => setCurrentView('dashboard')}
             className={`p-3 rounded-full transition-colors ${
-              currentView === 'dashboard' ? 'bg-amber-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+              currentView === 'dashboard' ? 'bg-brand-red text-brand-white' : 'text-brand-red hover:bg-brand-red-secondary'
             }`}
           >
             <BarChart3 className="w-5 h-5" />
