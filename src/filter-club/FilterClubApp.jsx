@@ -4,7 +4,7 @@ import SetupView from './SetupView';
 import VotingView from './VotingView';
 import DashboardView from './DashboardView';
 
-const API_URL = 'http://localhost:5000/api/sessions';
+const API_URL = 'https://filter-club-api.onrender.com/api/sessions';
 
 const FilterClubApp = () => {
   const [currentView, setCurrentView] = useState('setup');
