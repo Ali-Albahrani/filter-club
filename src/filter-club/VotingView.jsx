@@ -210,7 +210,7 @@ const VotingView = ({
             {calculateResults().map((result, index) => (
               <div key={result.name} className={`p-4 rounded-lg border-2 ${
                 index === 0 ? 'border-brand-red bg-brand-red-secondary' :
-                index === 1 ? 'border-brand-blue bg-brand-blue' :
+                index === 1 ? 'border-brand-blue bg-brand-blue text-black' :
                 index === 2 ? 'border-brand-red-secondary bg-brand-white' :
                 'border-brand-blue bg-brand-white'
               }`}>
@@ -221,7 +221,7 @@ const VotingView = ({
                       <span className="font-medium text-lg text-brand-red">
                         #{index + 1} {result.name}
                       </span>
-                      <div className="text-sm text-brand-blue">
+                      <div className="text-sm text-black">
                         {result.roaster} • {result.country}
                       </div>
                     </div>
