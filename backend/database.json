@@ -1,0 +1,93 @@
+{
+  "sessions": [
+    {
+      "date": "2025-10-08",
+      "name": "Test 1",
+      "coffees": [
+        {
+          "name": "c1 ",
+          "roaster": "lhlk",
+          "country": "lkh",
+          "varietals": "lkhlkh",
+          "processingMethod": "lkh"
+        },
+        {
+          "name": "c2",
+          "roaster": "sdfgsd",
+          "country": "fgsdf",
+          "varietals": "gsdf",
+          "processingMethod": "gsdfg"
+        },
+        {
+          "name": "c3",
+          "roaster": "gsdfg",
+          "country": "fgsdf",
+          "varietals": "sdfgsd",
+          "processingMethod": "sdfg"
+        }
+      ],
+      "members": [
+        "Ali",
+        "Eman",
+        "Phil"
+      ],
+      "_id": "1759884131559",
+      "votes": [
+        {
+          "member": "Ali",
+          "rankings": [
+            "c2",
+            "c3",
+            "c1 "
+          ],
+          "timestamp": "2025-10-08T00:42:24.369Z"
+        },
+        {
+          "member": "Eman",
+          "rankings": [
+            "c1 ",
+            "c3",
+            "c2"
+          ],
+          "timestamp": "2025-10-08T00:42:27.702Z"
+        },
+        {
+          "member": "Phil",
+          "rankings": [
+            "c2",
+            "c1 ",
+            "c3"
+          ],
+          "timestamp": "2025-10-08T00:42:31.254Z"
+        }
+      ],
+      "results": [
+        {
+          "score": 7,
+          "name": "c2",
+          "roaster": "sdfgsd",
+          "country": "fgsdf",
+          "varietals": "gsdf",
+          "processingMethod": "gsdfg"
+        },
+        {
+          "score": 6,
+          "name": "c1 ",
+          "roaster": "lhlk",
+          "country": "lkh",
+          "varietals": "lkhlkh",
+          "processingMethod": "lkh"
+        },
+        {
+          "score": 5,
+          "name": "c3",
+          "roaster": "gsdfg",
+          "country": "fgsdf",
+          "varietals": "sdfgsd",
+          "processingMethod": "sdfg"
+        }
+      ],
+      "completed": true
+    }
+  ]
+}
