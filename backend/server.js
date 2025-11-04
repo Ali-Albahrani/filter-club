@@ -33,6 +33,51 @@ const User = require('./models/User');
 const Event = require('./models/Event');
 const Leaderboard = require('./models/Leaderboard');
 
+// Import controllers
+const { 
+  registerUser, 
+  loginUser, 
+  getUserProfile,
+  logoutUser
+} = require('./controllers/authController');
+
+const { 
+  getEvents, 
+  getEvent, 
+  createEvent, 
+  updateEvent, 
+  deleteEvent 
+} = require('./controllers/eventController');
+
+const { 
+  addCoffee, 
+  getCoffees, 
+  updateCoffee, 
+  removeCoffee 
+} = require('./controllers/coffeeController');
+
+const {
+  joinEvent,
+  getSession
+} = require('./controllers/sessionController');
+
+const {
+  submitRating,
+  submitGuess,
+  getResults,
+  publishEvent
+} = require('./controllers/ratingGuessController');
+
+const {
+  getLeaderboard,
+  getUserPoints
+} = require('./controllers/leaderboardController');
+
+// Import middleware
+const auth = require('./middleware/auth');
+const roleAuth = require('./middleware/roleAuth');
+const { validateEvent, validateRating, validateGuess } = require('./middleware/validation');
+
 // User API endpoints
 app.get('/api/users', async (req, res) => {
   try {
@@ -108,6 +153,39 @@ app.get('/api/leaderboard', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// Authentication routes
+app.post('/api/auth/signup', registerUser);
+app.post('/api/auth/login', loginUser);
+app.post('/api/auth/logout', auth, logoutUser);
+app.post('/api/auth/profile', auth, getUserProfile);
+
+// Event routes
+app.get('/api/events', getEvents);
+app.get('/api/events/:id', getEvent);
+app.post('/api/events', auth, validateEvent, createEvent);
+app.patch('/api/events/:id', auth, updateEvent);
+app.delete('/api/events/:id', auth, deleteEvent);
+
+// Coffee routes
+app.post('/api/events/:eventId/coffees', auth, addCoffee);
+app.get('/api/events/:eventId/coffees', getCoffees);
+app.patch('/api/events/:eventId/coffees/:coffeeId', auth, updateCoffee);
+app.delete('/api/events/:eventId/coffees/:coffeeId', auth, removeCoffee);
+
+// Session routes
+app.post('/api/events/:eventId/sessions', auth, joinEvent);
+app.get('/api/events/:eventId/sessions/:sessionId', auth, getSession);
+
+// Rating and Guess routes
+app.post('/api/sessions/:sessionId/ratings', auth, validateRating, submitRating);
+app.post('/api/sessions/:sessionId/guesses', auth, validateGuess, submitGuess);
+app.get('/api/events/:eventId/results', auth, getResults);
+app.post('/api/events/:eventId/publish', auth, publishEvent);
+
+// Leaderboard routes
+app.get('/api/leaderboard', getLeaderboard);
+app.get('/api/users/:userId/points', getUserPoints);
 
 // Get a single session by ID
 app.get('/api/sessions/:id', async (req, res) => {

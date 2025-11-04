@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 const ratingSchema = new mongoose.Schema({
   coffeeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event.coffees',
+    // references a coffee subdocument id inside an Event; avoid incorrect ref strings
+    // we keep it as ObjectId and validate existence at the application layer
     required: true
   },
   score: {
@@ -21,7 +22,7 @@ const ratingSchema = new mongoose.Schema({
 const guessSchema = new mongoose.Schema({
   coffeeId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Event.coffees',
+    // see note above about validating coffee existence at app layer
     required: true
   },
   guessedOriginCountry: {
@@ -44,7 +45,8 @@ const sessionSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    // allow anonymous sessions (use email) so not required
+    required: false
   },
   eventId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -82,6 +84,15 @@ const sessionSchema = new mongoose.Schema({
 });
 
 // Indexes
-sessionSchema.index({ eventId: 1, userId: 1 }, { unique: true });
+// Unique per (eventId, userId) when userId exists
+sessionSchema.index(
+  { eventId: 1, userId: 1 },
+  { unique: true, partialFilterExpression: { userId: { $type: 'objectId' } } }
+);
+// Unique per (eventId, email) for anonymous participants
+sessionSchema.index(
+  { eventId: 1, email: 1 },
+  { unique: true, partialFilterExpression: { email: { $type: 'string' } } }
+);
 
 module.exports = mongoose.model('Session', sessionSchema);

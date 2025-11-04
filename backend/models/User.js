@@ -13,6 +13,13 @@ const userSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  // Password is required for local auth flows and stored hashed.
+  // select: false prevents sending it by default when querying users.
+  password: {
+    type: String,
+    required: true,
+    select: false
+  },
   role: {
     type: String,
     enum: ['participant', 'organizer', 'admin'],

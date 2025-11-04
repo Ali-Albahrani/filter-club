@@ -70,6 +70,12 @@ const eventSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+  ,
+  // Whether results have been published (controls masking and downstream jobs)
+  published: {
+    type: Boolean,
+    default: false
+  }
 }, {
   timestamps: true
 });
