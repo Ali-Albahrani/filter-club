@@ -71,6 +71,32 @@ const sessionSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  // Detailed results after event publication
+  results: {
+    published: {
+      type: Boolean,
+      default: false
+    },
+    detailedResults: {
+      type: Map,
+      of: {
+        coffeeId: mongoose.Schema.Types.ObjectId,
+        label: String,
+        name: String,
+        roaster: String,
+        originCountry: String,  // Only visible after publishing
+        process: String,        // Only visible after publishing
+        userRating: Number,
+        userGuessOrigin: String,
+        userGuessProcess: String,
+        isOriginCorrect: Boolean,
+        isProcessCorrect: Boolean,
+        pointsEarned: Number
+      }
+    },
+    totalPossiblePoints: Number,
+    rankInEvent: Number
+  },
   createdAt: {
     type: Date,
     default: Date.now

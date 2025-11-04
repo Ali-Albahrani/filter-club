@@ -213,34 +213,81 @@ const publishEvent = async (req, res) => {
     const sessions = await Session.find({ eventId: eventId }).populate('userId');
     
     // Calculate points for each session and update leaderboards
+    // Also calculate average scores for each coffee
+    const coffeeStats = {}; // To store stats for each coffee
+    
+    for (const coffee of event.coffees) {
+      coffeeStats[coffee._id.toString()] = {
+        totalScore: 0,
+        count: 0,
+        average: 0
+      };
+    }
+    
+    // First pass: Calculate points and coffee stats
     for (const session of sessions) {
       let totalPoints = 0;
+      let detailedResults = new Map(); // Store detailed results for this session
       
-      // Calculate points for each coffee in the session
-      for (const rating of session.ratings) {
-        // Find the corresponding coffee in the event
-        const coffee = event.coffees.find(c => c._id.toString() === rating.coffeeId.toString());
+      // Create detailed results for each coffee in the event
+      for (const coffee of event.coffees) {
+        // Find the user's rating for this coffee
+        const rating = session.ratings.find(r => 
+          r.coffeeId.toString() === coffee._id.toString()
+        );
         
-        if (coffee) {
-          // Look for a corresponding guess for this coffee
-          const guess = session.guesses.find(g => 
-            g.coffeeId.toString() === rating.coffeeId.toString()
-          );
-          
+        // Find the user's guess for this coffee
+        const guess = session.guesses.find(g => 
+          g.coffeeId.toString() === coffee._id.toString()
+        );
+        
+        // Initialize result object for this coffee
+        const result = {
+          coffeeId: coffee._id,
+          label: coffee.label,
+          name: event.published ? coffee.name : '[Coffee name hidden until results published]',
+          roaster: event.published ? coffee.roaster : '[Roaster hidden until results published]',
+          originCountry: event.published ? coffee.originCountry : '[Origin hidden until results published]',
+          process: event.published ? coffee.process : '[Process hidden until results published]',
+          userRating: rating ? rating.score : null,
+          userGuessOrigin: guess ? guess.guessedOriginCountry : null,
+          userGuessProcess: guess ? guess.guessedProcess : null,
+          isOriginCorrect: false,
+          isProcessCorrect: false,
+          pointsEarned: 0
+        };
+        
+        // Calculate points if both rating and guess exist
+        if (rating && guess) {
           // Award points for correct guesses
-          if (guess) {
-            if (guess.guessedOriginCountry === coffee.originCountry) {
-              totalPoints += 1; // 1 point for correct origin guess
-            }
-            if (guess.guessedProcess === coffee.process) {
-              totalPoints += 1; // 1 point for correct process guess
-            }
+          if (guess.guessedOriginCountry === coffee.originCountry) {
+            result.isOriginCorrect = true;
+            result.pointsEarned += 1; // 1 point for correct origin guess
+            totalPoints += 1;
           }
+          if (guess.guessedProcess === coffee.process) {
+            result.isProcessCorrect = true;
+            result.pointsEarned += 1; // 1 point for correct process guess
+            totalPoints += 1;
+          }
+        }
+        
+        detailedResults.set(coffee._id.toString(), result);
+        
+        // Add to coffee stats for average calculation (only if there's a rating)
+        if (rating) {
+          coffeeStats[coffee._id.toString()].totalScore += rating.score;
+          coffeeStats[coffee._id.toString()].count += 1;
         }
       }
       
-      // Update the session with calculated points
+      // Update the session with calculated points and detailed results
       session.points = totalPoints;
+      session.results = {
+        published: true,
+        detailedResults: detailedResults,
+        totalPossiblePoints: event.coffees.length * 2 // 2 points possible per coffee (origin + process)
+      };
       await session.save();
       
       // Update the user's leaderboard entry
@@ -266,6 +313,26 @@ const publishEvent = async (req, res) => {
           await leaderboardEntry.save();
         }
       }
+    }
+    
+    // Calculate averages for each coffee
+    for (const coffeeId in coffeeStats) {
+      if (coffeeStats[coffeeId].count > 0) {
+        coffeeStats[coffeeId].average = coffeeStats[coffeeId].totalScore / coffeeStats[coffeeId].count;
+      }
+    }
+    
+    // Add coffee stats to the event for future reference
+    event.coffeeStats = coffeeStats;
+    await event.save();
+    
+    // Now calculate ranks within the event (optional enhancement)
+    // Sort sessions by points to determine rank
+    const sortedSessions = [...sessions].sort((a, b) => b.points - a.points);
+    for (let i = 0; i < sortedSessions.length; i++) {
+      const session = sortedSessions[i];
+      session.results.rankInEvent = i + 1;
+      await session.save();
     }
     
     // Update event to mark as published so results are unmasked and downstream jobs can run

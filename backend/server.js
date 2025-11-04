@@ -58,7 +58,8 @@ const {
 
 const {
   joinEvent,
-  getSession
+  getSession,
+  getSessionResults
 } = require('./controllers/sessionController');
 
 const {
@@ -77,6 +78,17 @@ const {
 const auth = require('./middleware/auth');
 const roleAuth = require('./middleware/roleAuth');
 const { validateEvent, validateRating, validateGuess } = require('./middleware/validation');
+
+// Import services
+const {
+  generateMainResultsSpreadsheet,
+  generateIndividualResultsSpreadsheet
+} = require('./services/spreadsheetService');
+
+const {
+  generateEventResultsPDF,
+  generateIndividualResultsPDF
+} = require('./services/pdfService');
 
 // User API endpoints
 app.get('/api/users', async (req, res) => {
@@ -176,6 +188,7 @@ app.delete('/api/events/:eventId/coffees/:coffeeId', auth, removeCoffee);
 // Session routes
 app.post('/api/events/:eventId/sessions', auth, joinEvent);
 app.get('/api/events/:eventId/sessions/:sessionId', auth, getSession);
+app.get('/api/sessions/:id/results', auth, getSessionResults);
 
 // Rating and Guess routes
 app.post('/api/sessions/:sessionId/ratings', auth, validateRating, submitRating);
@@ -186,6 +199,121 @@ app.post('/api/events/:eventId/publish', auth, publishEvent);
 // Leaderboard routes
 app.get('/api/leaderboard', getLeaderboard);
 app.get('/api/users/:userId/points', getUserPoints);
+
+// Document generation routes (PDF/Spreadsheet)
+// Event results (organizer only)
+app.get('/api/events/:eventId/results/spreadsheet', auth, async (req, res) => {
+  try {
+    // Verify user is the organizer of this event
+    const event = await Event.findById(req.params.eventId);
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    
+    if (event.organizerId.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to access these results' });
+    }
+    
+    const { filename, buffer } = await generateMainResultsSpreadsheet(req.params.eventId);
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/events/:eventId/results/pdf', auth, async (req, res) => {
+  try {
+    // Verify user is the organizer of this event
+    const event = await Event.findById(req.params.eventId);
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+    
+    if (event.organizerId.toString() !== req.user.id) {
+      return res.status(403).json({ error: 'Not authorized to access these results' });
+    }
+    
+    const { filename, buffer } = await generateEventResultsPDF(req.params.eventId);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Individual results (user or organizer only)
+app.get('/api/sessions/:sessionId/results/spreadsheet', auth, async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.sessionId).populate('eventId', 'published organizerId');
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Check if user is session owner or event organizer
+    if (session.userId) {
+      if (session.userId.toString() !== req.user.id && 
+          session.eventId.organizerId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to download these results' });
+      }
+    } else {
+      if (session.eventId.organizerId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to download these results' });
+      }
+    }
+    
+    // Check if event is published
+    if (!session.eventId.published) {
+      return res.status(400).json({ error: 'Results not available until event is published' });
+    }
+    
+    const { filename, buffer } = await generateIndividualResultsSpreadsheet(req.params.sessionId);
+    
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/sessions/:sessionId/results/pdf', auth, async (req, res) => {
+  try {
+    const session = await Session.findById(req.params.sessionId).populate('eventId', 'published organizerId');
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Check if user is session owner or event organizer
+    if (session.userId) {
+      if (session.userId.toString() !== req.user.id && 
+          session.eventId.organizerId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to download these results' });
+      }
+    } else {
+      if (session.eventId.organizerId.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Not authorized to download these results' });
+      }
+    }
+    
+    // Check if event is published
+    if (!session.eventId.published) {
+      return res.status(400).json({ error: 'Results not available until event is published' });
+    }
+    
+    const { filename, buffer } = await generateIndividualResultsPDF(req.params.sessionId);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Get a single session by ID
 app.get('/api/sessions/:id', async (req, res) => {

@@ -61,7 +61,20 @@ const eventSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
+  published: {
+    type: Boolean,
+    default: false
+  },
   coffees: [coffeeSchema],
+  // Coffee statistics calculated after results are published
+  coffeeStats: {
+    type: Map,
+    of: {
+      totalScore: Number,
+      count: Number,
+      average: Number
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -69,12 +82,6 @@ const eventSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
-  ,
-  // Whether results have been published (controls masking and downstream jobs)
-  published: {
-    type: Boolean,
-    default: false
   }
 }, {
   timestamps: true

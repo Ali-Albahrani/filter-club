@@ -88,7 +88,62 @@ const getSession = async (req, res) => {
   }
 };
 
+// @desc    Get detailed results for a session (after event is published)
+// @route   GET /api/sessions/:id/results
+// @access  Private (session owner or organizer)
+const getSessionResults = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find session
+    const session = await Session.findById(id)
+      .populate('userId', 'name email')
+      .populate('eventId', 'name published');
+    
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Check if user is session owner or event organizer
+    // Handle both registered users and anonymous sessions
+    let isAuthorized = false;
+    if (session.userId) {
+      // This session belongs to a registered user
+      isAuthorized = session.userId._id.toString() === req.user.id || 
+                    session.eventId.organizerId.toString() === req.user.id;
+    } else {
+      // This is an anonymous session - check if requesting user matches the session email
+      isAuthorized = session.eventId.organizerId.toString() === req.user.id; // Only organizer can access anonymous sessions
+    }
+    
+    if (!isAuthorized) {
+      return res.status(403).json({ error: 'Not authorized to view these results' });
+    }
+    
+    // Check if the event has been published
+    if (!session.eventId.published) {
+      return res.status(400).json({ error: 'Results not available until event is published' });
+    }
+    
+    // Return detailed results
+    res.json({
+      sessionId: session._id,
+      userId: session.userId ? session.userId._id : null,
+      userName: session.userId ? session.userId.name : 'Anonymous',
+      eventId: session.eventId._id,
+      eventName: session.eventId.name,
+      points: session.points,
+      rankInEvent: session.results.rankInEvent,
+      totalPossiblePoints: session.results.totalPossiblePoints,
+      detailedResults: session.results.detailedResults
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   joinEvent,
-  getSession
+  getSession,
+  getSessionResults
 };
