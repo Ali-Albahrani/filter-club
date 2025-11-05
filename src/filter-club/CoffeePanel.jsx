@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import RatingSlider from './RatingSlider';
 import GuessDropdown from './GuessDropdown';
 
-const CoffeePanel = ({ 
+const CoffeePanel = React.memo(({ 
   coffee, 
   rating, 
   guess, 
@@ -29,18 +29,18 @@ const CoffeePanel = ({
     setIsDirty(false);
   }, [rating, guess]);
 
-  const handleRatingChange = (newRating) => {
+  const handleRatingChange = useCallback((newRating) => {
     setLocalRating(newRating);
     setIsDirty(true);
     onRatingChange(coffee._id, newRating);
-  };
+  }, [coffee._id, onRatingChange]);
 
-  const handleGuessChange = (field, value) => {
+  const handleGuessChange = useCallback((field, value) => {
     const newGuess = { ...localGuess, [field]: value };
     setLocalGuess(newGuess);
     setIsDirty(true);
     onGuessChange(coffee._id, newGuess);
-  };
+  }, [coffee._id, localGuess, onGuessChange]);
 
   // Determine if user can see actual coffee details
   const canSeeDetails = isPublished || 
@@ -133,6 +133,6 @@ const CoffeePanel = ({
       )}
     </div>
   );
-};
+});
 
 export default CoffeePanel;

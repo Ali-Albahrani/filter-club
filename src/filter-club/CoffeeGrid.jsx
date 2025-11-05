@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import CoffeePanel from './CoffeePanel';
 
-const CoffeeGrid = ({ 
+const CoffeeGrid = React.memo(({ 
   coffees, 
   ratings = [], 
   guesses = [], 
@@ -11,22 +11,23 @@ const CoffeeGrid = ({
   currentUserId = null,
   eventOrganizerId = null
 }) => {
-  const getCoffeeRating = (coffeeId) => {
-    return ratings.find(rating => rating.coffeeId === coffeeId);
-  };
-
-  const getCoffeeGuess = (coffeeId) => {
-    return guesses.find(guess => guess.coffeeId === coffeeId);
-  };
+  // Memoize the coffee data processing to prevent unnecessary recalculations
+  const coffeeData = useMemo(() => {
+    return coffees.map(coffee => {
+      const rating = ratings.find(r => r.coffeeId === coffee._id);
+      const guess = guesses.find(g => g.coffeeId === coffee._id);
+      return { coffee, rating, guess };
+    });
+  }, [coffees, ratings, guesses]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {coffees.map((coffee) => (
+      {coffeeData.map(({ coffee, rating, guess }) => (
         <CoffeePanel
           key={coffee._id}
           coffee={coffee}
-          rating={getCoffeeRating(coffee._id)}
-          guess={getCoffeeGuess(coffee._id)}
+          rating={rating}
+          guess={guess}
           onRatingChange={onRatingChange}
           onGuessChange={onGuessChange}
           isPublished={isPublished}
@@ -36,6 +37,6 @@ const CoffeeGrid = ({
       ))}
     </div>
   );
-};
+});
 
 export default CoffeeGrid;

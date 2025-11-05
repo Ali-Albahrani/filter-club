@@ -6,57 +6,51 @@ import EventAdmin from './EventAdmin';
 import CuppingView from './CuppingView';
 import ResultsView from './ResultsView';
 import Leaderboard from './Leaderboard';
-import AlertModal from './AlertModal';
-
-// Base API URL - replace with your actual backend API URL
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+import apiClient from '../utils/apiClient';
+import { useAppContext } from './AppContext';
 
 const FilterClubApp = () => {
-  const [currentView, setCurrentView] = useState('eventList');
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [events, setEvents] = useState([]);
-  const [currentSession, setCurrentSession] = useState(null);
-  const [currentEvent, setCurrentEvent] = useState(null);
-  const [sessionResults, setSessionResults] = useState(null);
-  const [leaderboardData, setLeaderboardData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [loginView, setLoginView] = useState('login'); // 'login' or 'signup'
+  const { 
+    state, 
+    setCurrentView, 
+    setUser, 
+    setToken, 
+    setEvents, 
+    setCurrentSession, 
+    setCurrentEvent, 
+    setSessionResults, 
+    setLeaderboard,
+    setLoading,
+    setError,
+    logout,
+    addEvent,
+    updateCurrentSession
+  } = useAppContext();
 
-  // Load user and token from localStorage on initial load
+  const [loginView, setLoginView] = useState('login'); // 'login' or 'signup'
+  const [currentView, setCurrentViewLocal] = useState('eventList');
+
+  // Update local currentView when context changes
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    const savedToken = localStorage.getItem('token');
-    
-    if (savedUser && savedToken) {
-      setUser(JSON.parse(savedUser));
-      setToken(savedToken);
-    }
-  }, []);
+    setCurrentViewLocal(currentView);
+  }, [currentView]);
 
   // Load events and leaderboard data
   useEffect(() => {
-    if (token) {
+    if (state.token) {
       loadEvents();
       loadLeaderboard();
     }
-  }, [token]);
+  }, [state.token]);
 
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/events`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to load events');
-      const data = await response.json();
+      const data = await apiClient.events.getAll();
       setEvents(data);
     } catch (err) {
       console.error('Error loading events:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to load events');
     } finally {
       setLoading(false);
     }
@@ -65,17 +59,11 @@ const FilterClubApp = () => {
   const loadLeaderboard = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/leaderboard`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) throw new Error('Failed to load leaderboard');
-      const data = await response.json();
-      setLeaderboardData(data);
+      const data = await apiClient.leaderboard.get();
+      setLeaderboard(data);
     } catch (err) {
       console.error('Error loading leaderboard:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to load leaderboard');
     } finally {
       setLoading(false);
     }
@@ -85,18 +73,7 @@ const FilterClubApp = () => {
   const login = async (email, password) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Login failed');
-      }
-      
-      const data = await response.json();
+      const data = await apiClient.auth.login(email, password);
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setToken(data.token);
@@ -104,7 +81,7 @@ const FilterClubApp = () => {
       setCurrentView('eventList');
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message);
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -113,18 +90,7 @@ const FilterClubApp = () => {
   const signup = async (name, email, password) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/auth/signup`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password })
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Signup failed');
-      }
-      
-      const data = await response.json();
+      const data = await apiClient.auth.signup(name, email, password);
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       setToken(data.token);
@@ -132,17 +98,16 @@ const FilterClubApp = () => {
       setCurrentView('eventList');
     } catch (err) {
       console.error('Signup error:', err);
-      setError(err.message);
+      setError(err.message || 'Signup failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const logout = () => {
+  const appLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setToken(null);
-    setUser(null);
+    logout();
     setCurrentView('eventList');
   };
 
@@ -150,27 +115,13 @@ const FilterClubApp = () => {
   const createEvent = async (eventData) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/events`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(eventData)
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create event');
-      }
-      
-      const newEvent = await response.json();
-      setEvents([...events, newEvent]);
+      const newEvent = await apiClient.events.create(eventData);
+      addEvent(newEvent);
       setCurrentView('eventAdmin');
       setCurrentEvent(newEvent);
     } catch (err) {
       console.error('Error creating event:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to create event');
     } finally {
       setLoading(false);
     }
@@ -179,37 +130,17 @@ const FilterClubApp = () => {
   const joinEvent = async (eventId) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/events/${eventId}/sessions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to join event');
-      }
-      
-      const session = await response.json();
+      const session = await apiClient.sessions.join(eventId);
       setCurrentSession(session);
       
       // Load the full event details
-      const eventResponse = await fetch(`${API_BASE}/events/${eventId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!eventResponse.ok) throw new Error('Failed to load event details');
-      const eventDetails = await eventResponse.json();
+      const eventDetails = await apiClient.events.get(eventId);
       setCurrentEvent(eventDetails);
       
       setCurrentView('cupping');
     } catch (err) {
       console.error('Error joining event:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to join event');
     } finally {
       setLoading(false);
     }
@@ -217,21 +148,15 @@ const FilterClubApp = () => {
 
   const submitRating = async (sessionId, coffeeId, score) => {
     try {
-      const response = await fetch(`${API_BASE}/sessions/${sessionId}/ratings`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ coffeeId, score })
+      const result = await apiClient.ratings.submit(sessionId, { coffeeId, score });
+      // Update local session data
+      updateCurrentSession({
+        ratings: [
+          ...state.currentSession.ratings.filter(r => r.coffeeId !== coffeeId),
+          { coffeeId, score }
+        ]
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to submit rating');
-      }
-      
-      return await response.json();
+      return result;
     } catch (err) {
       console.error('Error submitting rating:', err);
       throw err;
@@ -240,21 +165,19 @@ const FilterClubApp = () => {
 
   const submitGuess = async (sessionId, coffeeId, guessedOriginCountry, guessedProcess) => {
     try {
-      const response = await fetch(`${API_BASE}/sessions/${sessionId}/guesses`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ coffeeId, guessedOriginCountry, guessedProcess })
+      const result = await apiClient.guesses.submit(sessionId, { 
+        coffeeId, 
+        guessedOriginCountry, 
+        guessedProcess 
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to submit guess');
-      }
-      
-      return await response.json();
+      // Update local session data
+      updateCurrentSession({
+        guesses: [
+          ...state.currentSession.guesses.filter(g => g.coffeeId !== coffeeId),
+          { coffeeId, guessedOriginCountry, guessedProcess }
+        ]
+      });
+      return result;
     } catch (err) {
       console.error('Error submitting guess:', err);
       throw err;
@@ -269,23 +192,12 @@ const FilterClubApp = () => {
   const loadSessionResults = async (sessionId) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/sessions/${sessionId}/results`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to load results');
-      }
-      
-      const results = await response.json();
+      const results = await apiClient.sessions.getResults(sessionId);
       setSessionResults(results);
       setCurrentView('results');
     } catch (err) {
       console.error('Error loading session results:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to load results');
     } finally {
       setLoading(false);
     }
@@ -294,29 +206,24 @@ const FilterClubApp = () => {
   const downloadSpreadsheet = async (sessionId) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/sessions/${sessionId}/results/spreadsheet`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await apiClient.documents.getIndividualResultsSpreadsheet(sessionId);
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to download spreadsheet');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `results_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        throw new Error('Failed to download spreadsheet');
       }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `results_${new Date().toISOString().slice(0, 10)}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
     } catch (err) {
       console.error('Error downloading spreadsheet:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to download spreadsheet');
     } finally {
       setLoading(false);
     }
@@ -325,29 +232,24 @@ const FilterClubApp = () => {
   const downloadPDF = async (sessionId) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/sessions/${sessionId}/results/pdf`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await apiClient.documents.getIndividualResultsPDF(sessionId);
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to download PDF');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `results_${new Date().toISOString().slice(0, 10)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        throw new Error('Failed to download PDF');
       }
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `results_${new Date().toISOString().slice(0, 10)}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
     } catch (err) {
       console.error('Error downloading PDF:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to download PDF');
     } finally {
       setLoading(false);
     }
@@ -357,25 +259,12 @@ const FilterClubApp = () => {
   const updateCoffee = async (eventId, coffeeId, coffeeData) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/events/${eventId}/coffees/${coffeeId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(coffeeData)
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to update coffee');
-      }
-      
+      await apiClient.coffees.update(eventId, coffeeId, coffeeData);
       // Refresh events list
       loadEvents();
     } catch (err) {
       console.error('Error updating coffee:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to update coffee');
     } finally {
       setLoading(false);
     }
@@ -384,25 +273,12 @@ const FilterClubApp = () => {
   const addCoffee = async (eventId, coffeeData) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/events/${eventId}/coffees`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(coffeeData)
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to add coffee');
-      }
-      
+      await apiClient.coffees.add(eventId, coffeeData);
       // Refresh events list
       loadEvents();
     } catch (err) {
       console.error('Error adding coffee:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to add coffee');
     } finally {
       setLoading(false);
     }
@@ -411,23 +287,12 @@ const FilterClubApp = () => {
   const removeCoffee = async (eventId, coffeeId) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/events/${eventId}/coffees/${coffeeId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to remove coffee');
-      }
-      
+      await apiClient.coffees.delete(eventId, coffeeId);
       // Refresh events list
       loadEvents();
     } catch (err) {
       console.error('Error removing coffee:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to remove coffee');
     } finally {
       setLoading(false);
     }
@@ -436,26 +301,14 @@ const FilterClubApp = () => {
   const publishEvent = async (eventId) => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE}/events/${eventId}/publish`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to publish event');
-      }
-      
+      await apiClient.results.publish(eventId);
       // Refresh events list
       loadEvents();
-      
       // Navigate back to event list
       setCurrentView('eventList');
     } catch (err) {
       console.error('Error publishing event:', err);
-      setError(err.message);
+      setError(err.message || 'Failed to publish event');
     } finally {
       setLoading(false);
     }
@@ -468,7 +321,7 @@ const FilterClubApp = () => {
 
   return (
     <div className="min-h-screen pb-28 bg-brand-white">
-      {loading && (
+      {state.loading && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-brand-white p-6 rounded-lg text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-red mx-auto mb-4"></div>
@@ -477,15 +330,15 @@ const FilterClubApp = () => {
         </div>
       )}
 
-      {error && (
+      {state.error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded fixed top-4 right-4 z-50">
-          {error}
+          {state.error}
           <button className="ml-4" onClick={() => setError('')}>×</button>
         </div>
       )}
 
       {/* Authentication views - shown when not logged in */}
-      {!user && (
+      {!state.user && (
         <div className="max-w-md mx-auto p-6 bg-brand-white rounded-lg shadow-md mt-20">
           <div className="text-center mb-8">
             <Coffee className="w-16 h-16 mx-auto text-brand-red mb-4" />
@@ -519,21 +372,21 @@ const FilterClubApp = () => {
           </div>
 
           {loginView === 'login' ? (
-            <LoginForm onLogin={login} loading={loading} />
+            <LoginForm onLogin={login} loading={state.loading} />
           ) : (
-            <SignupForm onSignup={signup} loading={loading} />
+            <SignupForm onSignup={signup} loading={state.loading} />
           )}
         </div>
       )}
 
       {/* Main application views - shown when logged in */}
-      {user && (
+      {state.user && (
         <>
           {/* Main Content */}
           {currentView === 'eventList' && (
             <EventList 
-              events={events} 
-              user={user} 
+              events={state.events} 
+              user={state.user} 
               joinEvent={joinEvent} 
             />
           )}
@@ -541,38 +394,38 @@ const FilterClubApp = () => {
           {currentView === 'setup' && (
             <SetupView 
               createEvent={createEvent}
-              user={user}
+              user={state.user}
             />
           )}
 
-          {currentView === 'eventAdmin' && currentEvent && (
+          {currentView === 'eventAdmin' && state.currentEvent && (
             <EventAdmin
-              event={currentEvent}
+              event={state.currentEvent}
               updateCoffee={updateCoffee}
               addCoffee={addCoffee}
               removeCoffee={removeCoffee}
               publishEvent={publishEvent}
-              user={user}
+              user={state.user}
             />
           )}
 
-          {currentView === 'cupping' && currentEvent && currentSession && (
+          {currentView === 'cupping' && state.currentEvent && state.currentSession && (
             <CuppingView
-              currentSession={currentSession}
-              event={currentEvent}
-              ratings={currentSession.ratings || []}
-              guesses={currentSession.guesses || []}
+              currentSession={state.currentSession}
+              event={state.currentEvent}
+              ratings={state.currentSession.ratings || []}
+              guesses={state.currentSession.guesses || []}
               submitRating={submitRating}
               submitGuess={submitGuess}
               finishSession={finishSession}
             />
           )}
 
-          {currentView === 'results' && sessionResults && currentEvent && (
+          {currentView === 'results' && state.sessionResults && state.currentEvent && (
             <ResultsView
-              sessionResults={sessionResults}
-              event={currentEvent}
-              user={user}
+              sessionResults={state.sessionResults}
+              event={state.currentEvent}
+              user={state.user}
               downloadSpreadsheet={downloadSpreadsheet}
               downloadPDF={downloadPDF}
               backToEventList={backToEventList}
@@ -581,8 +434,8 @@ const FilterClubApp = () => {
 
           {currentView === 'leaderboard' && (
             <Leaderboard
-              leaderboardData={leaderboardData}
-              events={events}
+              leaderboardData={state.leaderboardData}
+              events={state.events}
             />
           )}
 
@@ -614,7 +467,7 @@ const FilterClubApp = () => {
                 <Trophy className="w-5 h-5" />
               </button>
               <button
-                onClick={logout}
+                onClick={appLogout}
                 className="p-3 rounded-full text-brand-red hover:bg-brand-red-secondary transition-colors"
               >
                 <LogIn className="w-5 h-5 transform rotate-180" />
