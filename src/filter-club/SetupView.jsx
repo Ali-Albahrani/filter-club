@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
-import { Coffee, Plus } from 'lucide-react';
+import { Coffee, Plus, Calendar, MapPin } from 'lucide-react';
 import AlertModal from './AlertModal';
 
-const SetupView = ({ createNewSession }) => {
-  const [coffees, setCoffees] = useState([{ name: '', roaster: '', country: '', varietals: '', processingMethod: '' }]);
-  const [members, setMembers] = useState(['']);
-  const [sessionName, setSessionName] = useState('');
+const SetupView = ({ createEvent, user }) => {
+  const [eventDetails, setEventDetails] = useState({
+    name: '',
+    startTs: '',
+    endTs: '',
+    location: ''
+  });
+  const [coffees, setCoffees] = useState([
+    { name: '', roaster: '', originCountry: '', process: '' }
+  ]);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
-  const addCoffee = () => setCoffees(prev => [...prev, { name: '', roaster: '', country: '', varietals: '', processingMethod: '' }]);
-  const addMember = () => setMembers(prev => [...prev, '']);
+  const addCoffee = () => setCoffees(prev => [...prev, { name: '', roaster: '', originCountry: '', process: '' }]);
 
   const removeCoffee = (index) => {
-    setCoffees(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeMember = (index) => {
-    setMembers(prev => prev.filter((_, i) => i !== index));
+    if (coffees.length > 1) {
+      setCoffees(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const updateCoffee = (index, field, value) => {
@@ -26,57 +29,114 @@ const SetupView = ({ createNewSession }) => {
     ));
   };
 
-  const updateMember = (index, value) => {
-    setMembers(prev => prev.map((member, i) => i === index ? value : member));
+  const updateEventDetails = (field, value) => {
+    setEventDetails(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    const validCoffees = coffees.filter(c => c.name.trim() && c.roaster.trim() && c.country.trim());
-    const validMembers = members.filter(m => m.trim());
-    if (validCoffees.length < 2 || validMembers.length < 1) {
-      setAlertMessage('Please add at least 2 complete coffees (with name, roaster, and country) and 1 member');
+  const handleSubmit = async () => {
+    // Validate inputs
+    const validCoffees = coffees.filter(c => 
+      c.name.trim() && c.roaster.trim() && c.originCountry.trim() && c.process.trim()
+    );
+    
+    if (validCoffees.length < 1) {
+      setAlertMessage('Please add at least 1 complete coffee (with name, roaster, origin, and process)');
       setAlertOpen(true);
       return;
     }
-    createNewSession({
-      name: sessionName || `Session ${new Date().toLocaleDateString()}`,
-      coffees: validCoffees,
-      members: validMembers
-    });
+    
+    if (!eventDetails.name.trim()) {
+      setAlertMessage('Please enter an event name');
+      setAlertOpen(true);
+      return;
+    }
+    
+    if (!eventDetails.startTs) {
+      setAlertMessage('Please select a start time');
+      setAlertOpen(true);
+      return;
+    }
+    
+    // Map coffees to the format expected by the backend (with labels)
+    const coffeesWithLabels = validCoffees.map((coffee, index) => ({
+      ...coffee,
+      label: String.fromCharCode(65 + index) // A, B, C, ...
+    }));
+
+    try {
+      await createEvent({
+        ...eventDetails,
+        organizerId: user._id,
+        coffees: coffeesWithLabels
+      });
+    } catch (error) {
+      setAlertMessage(error.message || 'Failed to create event. Please try again.');
+      setAlertOpen(true);
+    }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="text-center mb-8">
         <Coffee className="w-12 h-12 mx-auto mb-4 text-brand-red" />
-        <h1 className="text-3xl font-bold text-brand-red mb-2">Filter Club</h1>
-        <p className="text-brand-red">Set up your coffee cupping session</p>
+        <h1 className="text-3xl font-bold text-brand-red mb-2">Disco Spoons</h1>
+        <p className="text-brand-red">Create a new cupping event</p>
       </div>
       <div className="bg-brand-blue rounded-lg shadow-md p-6 space-y-6">
         <div>
           <label className="block text-sm font-medium text-brand-red mb-2">
-            Session Name (Optional)
+            Event Name
           </label>
           <input
             type="text"
-            value={sessionName}
-            onChange={(e) => setSessionName(e.target.value)}
+            value={eventDetails.name}
+            onChange={(e) => updateEventDetails('name', e.target.value)}
             className="w-full p-3 border border-brand-white rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
-            placeholder="e.g., Ethiopian Tasting"
+            placeholder="e.g., Ethiopian Tasting Session"
           />
         </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-brand-red mb-2">
+              <Calendar className="w-4 h-4 inline mr-1" />
+              Start Date & Time
+            </label>
+            <input
+              type="datetime-local"
+              value={eventDetails.startTs}
+              onChange={(e) => updateEventDetails('startTs', e.target.value)}
+              className="w-full p-3 border border-brand-white rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-brand-red mb-2">
+              <MapPin className="w-4 h-4 inline mr-1" />
+              Location
+            </label>
+            <input
+              type="text"
+              value={eventDetails.location}
+              onChange={(e) => updateEventDetails('location', e.target.value)}
+              className="w-full p-3 border border-brand-white rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
+              placeholder="e.g., Conference Room A"
+            />
+          </div>
+        </div>
+        
         <div>
           <label className="block text-sm font-medium text-brand-red mb-2">
-            Coffees
+            Coffees for Cupping
           </label>
           {coffees.map((coffee, index) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-3 p-3 border border-brand-blue rounded-lg relative">
+            <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3 p-3 border border-brand-blue rounded-lg relative">
               <input
                 type="text"
                 value={coffee.name}
                 onChange={(e) => updateCoffee(index, 'name', e.target.value)}
                 className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
-                placeholder="Name"
+                placeholder="Coffee Name"
               />
               <input
                 type="text"
@@ -87,30 +147,27 @@ const SetupView = ({ createNewSession }) => {
               />
               <input
                 type="text"
-                value={coffee.country}
-                onChange={(e) => updateCoffee(index, 'country', e.target.value)}
+                value={coffee.originCountry}
+                onChange={(e) => updateCoffee(index, 'originCountry', e.target.value)}
                 className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
-                placeholder="Country"
+                placeholder="Origin Country"
               />
-              <input
-                type="text"
-                value={coffee.varietals}
-                onChange={(e) => updateCoffee(index, 'varietals', e.target.value)}
+              <select
+                value={coffee.process}
+                onChange={(e) => updateCoffee(index, 'process', e.target.value)}
                 className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
-                placeholder="Varietals"
-              />
-              <input
-                type="text"
-                value={coffee.processingMethod}
-                onChange={(e) => updateCoffee(index, 'processingMethod', e.target.value)}
-                className="p-2 border border-brand-blue rounded focus:ring-2 focus:ring-brand-red focus:border-transparent"
-                placeholder="Process"
-              />
+              >
+                <option value="">Process</option>
+                <option value="washed">Washed</option>
+                <option value="honey">Honey</option>
+                <option value="natural">Natural</option>
+                <option value="experimental">Experimental</option>
+              </select>
               {coffees.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeCoffee(index)}
-                  className="absolute top-2 right-2 text-brand-red hover:text-brand-red-secondary text-lg font-bold"
+                  className="absolute -top-2 -right-2 bg-brand-red text-brand-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-bold"
                   aria-label="Remove coffee"
                 >
                   ×
@@ -126,44 +183,12 @@ const SetupView = ({ createNewSession }) => {
             Add Coffee
           </button>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-brand-red mb-2">
-            Members
-          </label>
-          {members.map((member, index) => (
-            <div key={index} className="relative mb-2">
-              <input
-                type="text"
-                value={member}
-                onChange={(e) => updateMember(index, e.target.value)}
-                className="w-full p-3 border border-brand-blue rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
-                placeholder={`Member ${index + 1}`}
-              />
-              {members.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeMember(index)}
-                  className="absolute top-1 right-2 text-brand-red hover:text-brand-red-secondary text-lg font-bold"
-                  aria-label="Remove member"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-          ))}
-          <button
-            onClick={addMember}
-            className="flex items-center text-brand-red hover:text-brand-red-secondary font-medium"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add Member
-          </button>
-        </div>
+        
         <button
           onClick={handleSubmit}
           className="w-full bg-brand-red text-brand-white py-3 px-4 rounded-lg hover:bg-brand-red-secondary transition-colors font-medium"
         >
-          Start Cupping Session
+          Create Cupping Event
         </button>
       </div>
       <AlertModal open={alertOpen} onClose={() => setAlertOpen(false)} message={alertMessage} />
