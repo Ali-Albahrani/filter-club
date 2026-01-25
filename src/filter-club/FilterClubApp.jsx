@@ -32,8 +32,8 @@ const FilterClubApp = () => {
 
   // Update local currentView when context changes
   useEffect(() => {
-    setCurrentViewLocal(currentView);
-  }, [currentView]);
+    setCurrentViewLocal(state.currentView);
+  }, [state.currentView]);
 
   // Load events and leaderboard data
   useEffect(() => {
@@ -75,9 +75,19 @@ const FilterClubApp = () => {
       setLoading(true);
       const data = await apiClient.auth.login(email, password);
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify({
+        _id: data._id,
+        name: data.name,
+        email: data.email,
+        role: data.role
+      }));
       setToken(data.token);
-      setUser(data.user);
+      setUser({
+        _id: data._id,
+        name: data.name,
+        email: data.email,
+        role: data.role
+      });
       setCurrentView('eventList');
     } catch (err) {
       console.error('Login error:', err);
@@ -92,9 +102,19 @@ const FilterClubApp = () => {
       setLoading(true);
       const data = await apiClient.auth.signup(name, email, password);
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('user', JSON.stringify({
+        _id: data._id,
+        name: data.name,
+        email: data.email,
+        role: data.role
+      }));
       setToken(data.token);
-      setUser(data.user);
+      setUser({
+        _id: data._id,
+        name: data.name,
+        email: data.email,
+        role: data.role
+      });
       setCurrentView('eventList');
     } catch (err) {
       console.error('Signup error:', err);

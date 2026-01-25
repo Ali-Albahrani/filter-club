@@ -56,6 +56,22 @@ const SetupView = ({ createEvent, user }) => {
       setAlertOpen(true);
       return;
     }
+
+    if (!eventDetails.endTs) {
+      setAlertMessage('Please select an end time');
+      setAlertOpen(true);
+      return;
+    }
+
+    // Validate that end time is after start time
+    const startDateTime = new Date(eventDetails.startTs);
+    const endDateTime = new Date(eventDetails.endTs);
+
+    if (endDateTime <= startDateTime) {
+      setAlertMessage('End time must be after start time');
+      setAlertOpen(true);
+      return;
+    }
     
     // Map coffees to the format expected by the backend (with labels)
     const coffeesWithLabels = validCoffees.map((coffee, index) => ({
@@ -96,7 +112,7 @@ const SetupView = ({ createEvent, user }) => {
           />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium text-brand-red mb-2">
               <Calendar className="w-4 h-4 inline mr-1" />
@@ -109,7 +125,20 @@ const SetupView = ({ createEvent, user }) => {
               className="w-full p-3 border border-brand-white rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
             />
           </div>
-          
+
+          <div>
+            <label className="block text-sm font-medium text-brand-red mb-2">
+              <Calendar className="w-4 h-4 inline mr-1" />
+              End Date & Time
+            </label>
+            <input
+              type="datetime-local"
+              value={eventDetails.endTs}
+              onChange={(e) => updateEventDetails('endTs', e.target.value)}
+              className="w-full p-3 border border-brand-white rounded-lg focus:ring-2 focus:ring-brand-red focus:border-transparent"
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-brand-red mb-2">
               <MapPin className="w-4 h-4 inline mr-1" />

@@ -24,9 +24,6 @@ app.get('/', (req, res) => {
   res.send('API is running');
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
 // Import the models for API endpoints
 const Session = require('./models/Session');
 const User = require('./models/User');
@@ -90,81 +87,6 @@ const {
   generateIndividualResultsPDF
 } = require('./services/pdfService');
 
-// User API endpoints
-app.get('/api/users', async (req, res) => {
-  try {
-    const users = await User.find();
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/users/:id', async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/users', async (req, res) => {
-  try {
-    const user = new User(req.body);
-    const savedUser = await user.save();
-    res.status(201).json(savedUser);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// Event API endpoints
-app.get('/api/events', async (req, res) => {
-  try {
-    const events = await Event.find().populate('organizerId', 'name email');
-    res.json(events);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/events/:id', async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id).populate('organizerId', 'name email');
-    if (!event) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-    res.json(event);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/events', async (req, res) => {
-  try {
-    const event = new Event(req.body);
-    const savedEvent = await event.save();
-    res.status(201).json(savedEvent);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
-
-// Leaderboard API endpoints
-app.get('/api/leaderboard', async (req, res) => {
-  try {
-    const leaderboard = await Leaderboard.find()
-      .populate('userId', 'name email')
-      .sort({ totalPoints: -1 });
-    res.json(leaderboard);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // Authentication routes
 app.post('/api/auth/signup', registerUser);
@@ -388,3 +310,6 @@ app.post('/api/sessions', async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 });
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
